@@ -25,27 +25,28 @@ def create_assistant(file):
     assistant = client.beta.assistants.create(
         name="WhatsApp AirBnb Assistant",
         instructions="You're a helpful WhatsApp assistant that can assist guests that are staying in our Paris AirBnb. Use your knowledge base to best respond to customer queries. If you don't know the answer, say simply that you cannot help with question and advice to contact the host directly. Be friendly and funny.",
-        tools=[{"type": "retrieval"}],
-        model="gpt-4-1106-preview",
-        file_ids=[file.id],
+        tools=[{"type": "file_search"}],
+        model="gpt-4o",
+        # file_ids=[file.id],
     )
     return assistant
 
 
 # Use context manager to ensure the shelf file is closed properly
 def check_if_thread_exists(wa_id):
-    with shelve.open("threads_db") as threads_shelf:
+    with shelve.open("thread_db") as threads_shelf:
         return threads_shelf.get(wa_id, None)
 
 
 def store_thread(wa_id, thread_id):
-    with shelve.open("threads_db", writeback=True) as threads_shelf:
+    with shelve.open("thread_db", writeback=True) as threads_shelf:
         threads_shelf[wa_id] = thread_id
 
 
 def run_assistant(thread, name):
     # Retrieve the Assistant
     assistant = client.beta.assistants.retrieve(OPENAI_ASSISTANT_ID)
+    print(f"ASSISTANT_ID: {assistant.id}")
 
     # Run the assistant
     run = client.beta.threads.runs.create(
@@ -72,6 +73,9 @@ def generate_response(message_body, wa_id, name):
     # Check if there is already a thread_id for the wa_id
     thread_id = check_if_thread_exists(wa_id)
 
+    print( f"THREAD ID: {thread_id}")
+    print( f"MESSAGE BODY: {message_body}")
+
     # If a thread doesn't exist, create one and store it
     if thread_id is None:
         logging.info(f"Creating new thread for {name} with wa_id {wa_id}")
@@ -79,6 +83,19 @@ def generate_response(message_body, wa_id, name):
         store_thread(wa_id, thread.id)
         thread_id = thread.id
 
+    # Check for special case
+    # elif message_body == "CLEAR":
+    #     logging.info(f"Clearing thread for {name} with wa_id {wa_id}")
+    #     thread = client.beta.threads.retrieve(thread_id)
+    #     if( thread ):
+    #         client.beta.threads.delete(thread_id)
+    #         return "Cleared conversation history"
+    #     else:
+    #         return "No conversation history to clear"
+        # thread = client.beta.threads.create()
+        # store_thread(wa_id, thread.id)
+        
+        
     # Otherwise, retrieve the existing thread
     else:
         logging.info(f"Retrieving existing thread for {name} with wa_id {wa_id}")
