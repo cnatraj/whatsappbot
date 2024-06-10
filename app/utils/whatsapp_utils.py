@@ -4,6 +4,7 @@ import json
 import requests
 
 from app.services.openai_service import generate_response
+from app.services.firebase_service import store_message
 import re
 
 
@@ -89,12 +90,27 @@ def process_whatsapp_message(body):
     # TODO: implement custom function here
     # response = generate_response(message_body)
 
+    # store the incoming message
+    incomingData = json.dumps( 
+        {
+            "messaging_product" : "whatsapp",
+            "recipient_type" : "individual",
+            "text" :{
+                "body" : message_body
+            },
+            "from" : wa_id,
+            "type" : "text"
+        }
+    )
+    store_message('user', wa_id, incomingData)
+
     # OpenAI Integration
     response = generate_response(message_body, wa_id, name)
     response = process_text_for_whatsapp(response)
 
     data = get_text_message_input(wa_id, response)
     send_message(data)
+    store_message('bot', wa_id, data)
 
 
 def is_valid_whatsapp_message(body):
