@@ -87,3 +87,6 @@ def webhook_post():
     return handle_message()
 
 
+@webhook_blueprint.route("/", methods=["GET"])
+def home_get():
+    return "Hello World"
