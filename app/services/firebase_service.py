@@ -40,7 +40,7 @@ def check_if_thread_exists_in_firestore(wa_id):
         return None 
 
 def store_message(role, wa_id, data):
-    wa_id = '18583496538'
+    # wa_id = '18583496538'
     logging.info(f"FIRESTORE: Storing data for {wa_id}")
     
     doc_ref= db.collection(u'threads').document(wa_id).collection(u'messages').document()
