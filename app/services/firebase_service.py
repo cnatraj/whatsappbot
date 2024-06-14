@@ -1,14 +1,29 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
+from dotenv import load_dotenv
 import json
 import logging
 import datetime
 import time
 
-# get the credentials from the json file
-dir_path = os.path.dirname(os.path.realpath(__file__))
-cred = credentials.Certificate(f'{dir_path}/firebase_credentials.cred.json')
+
+# create credentials json
+load_dotenv()
+cred_json = {
+  "type": os.getenv("FB_TYPE"),
+  "project_id": os.getenv("FB_PROJECT_ID"),
+  "private_key_id": os.getenv("FB_PRIVATE_KEY_ID"),
+  "private_key": os.getenv("FB_PRIVATE_KEY"),
+  "client_email": os.getenv("FB_CLIENT_EMAIL"),
+  "client_id": os.getenv("FB_CLIENT_ID"),
+  "auth_uri": os.getenv("FB_AUTH_URI"),
+  "token_uri": os.getenv("FB_TOKEN_URI"),
+  "auth_provider_x509_cert_url": os.getenv("FB_AUTH_PROVIDER_X509_CERT_URL"),
+  "client_x509_cert_url": os.getenv("FB_CLIENT_X509_CERT_URL"),
+  "universe_domain": os.getenv("FB_UNIVERSE_DOMAIN")    
+}
+cred = credentials.Certificate(cred_json)
 
 #Check if firebase app already exists
 try:
