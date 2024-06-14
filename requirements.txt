@@ -4,3 +4,4 @@ openai
 aiohttp
 requests
 firebase-admin
+gunicorn
