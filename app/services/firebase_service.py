@@ -43,10 +43,6 @@ db = firestore.client()
 def store_thread_in_firestore(wa_id, thread_id, name):
     logging.info(f"FIRESTORE: Storing {thread_id} for {wa_id} and {name} in firestore")
 
-    # doc_ref = db.collection(u'threads').document(wa_id)
-    # doc_ref.set({
-    #     u'thread_id': thread_id
-    # })
     doc_id = wa_id + "_" + bot_id
     threads_ref = db.collection("threads").document(doc_id)
     
@@ -59,8 +55,6 @@ def store_thread_in_firestore(wa_id, thread_id, name):
         "name": name
     }
     threads_ref.set(thread_data)
-
-store_thread_in_firestore("wa_id", "thread_id", "name")
 
 # Retrieve a thread from the database
 def check_if_thread_exists_in_firestore(wa_id):
