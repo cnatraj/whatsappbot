@@ -36,22 +36,25 @@ def create_assistant(file):
 
 # Use context manager to ensure the shelf file is closed properly
 def check_if_thread_exists(wa_id):
-    #check if thread exists in local.
-    with shelve.open("thread_db") as threads_shelf:
-        thread_id = threads_shelf.get(wa_id, None);
+    # #check if thread exists in local.
+    # with shelve.open("thread_db") as threads_shelf:
+    #     thread_id = threads_shelf.get(wa_id, None);
 
-        if thread_id is None:
-            #check if it exists in firestore
-            thread_id = check_if_thread_exists_in_firestore(wa_id);
-        return thread_id
+    #     if thread_id is None:
+    #         #check if it exists in firestore
+    #         thread_id = check_if_thread_exists_in_firestore(wa_id);
+    #     return thread_id
+    #check if it exists in firestore
+    thread_id = check_if_thread_exists_in_firestore(wa_id);
+    return thread_id
 
 
-def store_thread(wa_id, thread_id):
+def store_thread(wa_id, thread_id, name):
     with shelve.open("thread_db", writeback=True) as threads_shelf:
         threads_shelf[wa_id] = thread_id
 
         #store thread in firestore
-        store_thread_in_firestore(wa_id, thread_id)
+        store_thread_in_firestore(wa_id, thread_id, name)
 
 
 def run_assistant(thread, name):
@@ -90,8 +93,11 @@ def generate_response(message_body, wa_id, name):
     # If a thread doesn't exist, create one and store it
     if thread_id is None:
         logging.info(f"Creating new thread for {name} with wa_id {wa_id}")
+        #create a new thread with openAI assistant
         thread = client.beta.threads.create()
-        store_thread(wa_id, thread.id)
+        
+        #store in Firebase
+        store_thread(wa_id, thread.id, name)
         thread_id = thread.id
 
     # Check for special case

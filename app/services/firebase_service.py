@@ -1,5 +1,6 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 import os
 from dotenv import load_dotenv
 import json
@@ -25,6 +26,10 @@ cred_json = {
 }
 cred = credentials.Certificate(cred_json)
 
+#TODO:Change this. Hardcoded Values for now
+org_uuid = os.getenv("ORG_UUID")
+bot_id = os.getenv("PHONE_NUMBER_ID")
+
 #Check if firebase app already exists
 try:
     firebase_admin.get_app()
@@ -35,35 +40,53 @@ except ValueError:
 db = firestore.client()
 
 # Add a new thread to the database
-def store_thread_in_firestore(wa_id, thread_id):
-    logging.info(f"FIRESTORE: Storing {thread_id} for {wa_id} in firestore")
+def store_thread_in_firestore(wa_id, thread_id, name):
+    logging.info(f"FIRESTORE: Storing {thread_id} for {wa_id} and {name} in firestore")
 
-    doc_ref = db.collection(u'threads').document(wa_id)
-    doc_ref.set({
-        u'thread_id': thread_id
-    })
+    # doc_ref = db.collection(u'threads').document(wa_id)
+    # doc_ref.set({
+    #     u'thread_id': thread_id
+    # })
+    doc_id = wa_id + "_" + bot_id
+    threads_ref = db.collection("threads").document(doc_id)
+    
+    thread_data = {
+        "bot_id":bot_id,
+        "createdAt":datetime.datetime.now(datetime.UTC),
+        "org_uuid":org_uuid,
+        "thread_id":thread_id,
+        "wa_id": wa_id,
+        "name": name
+    }
+    threads_ref.set(thread_data)
+
+store_thread_in_firestore("wa_id", "thread_id", "name")
 
 # Retrieve a thread from the database
 def check_if_thread_exists_in_firestore(wa_id):
-    logging.info(f"FIRESTORE: Checking firestore for thread {wa_id}")
+    
 
-    doc_ref = db.collection(u'threads').document(wa_id)
-    doc = doc_ref.get()
+    logging.info(f"FIRESTORE: Checking firestore for thread {wa_id}")
+    doc_id = wa_id + "_" + bot_id
+    threads_ref = db.collection("threads").document(doc_id)
+
+    doc = ( threads_ref.get() )
     if doc.exists:
         return doc.to_dict()['thread_id']
     else:
-        return None 
+        return None
 
 def store_message(role, wa_id, data):
     # wa_id = '18583496538'
     logging.info(f"FIRESTORE: Storing data for {wa_id}")
-    
-    doc_ref= db.collection(u'threads').document(wa_id).collection(u'messages').document()
+    doc_id = wa_id + "_" + bot_id
+    threads_ref = db.collection("threads").document(doc_id)
+    messages_ref = threads_ref.collection('messages').document()
+
+    # doc_ref= db.collection(u'threads').document(wa_id).collection(u'messages').document()
     # data = {"messaging_product": "whatsapp", "recipient_type": "individual", "to": "18583496538", "type": "text"}
     data = json.loads(data)
     data['role'] = role
     data['timestamp'] = time.time()
     data['utcDateTime'] = datetime.datetime.now(datetime.UTC)
-    doc_ref.set(data)
-
-    
+    messages_ref.set(data)
